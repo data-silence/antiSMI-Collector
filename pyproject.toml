@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "antismi"
+version = "0.1.0"
+description = ""
+authors = ["maxlethal <67437106+maxlethal@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
