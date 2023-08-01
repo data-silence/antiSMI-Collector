@@ -1,4 +1,5 @@
 import re
+import emoji
 from imports_shop import *
 from taste import *
 from imports_common import *
@@ -78,21 +79,30 @@ class Parser(Query):
                     news_id = int(news_content.find(attrs={'class': 'tgme_widget_message_date'}).get('href').split('/')[
                                       -1])
                     if dirty_news and (news_id not in self.ids):
-                        regex_url = re.compile('https:\/\/t.me\/[-_a-z]*$')
                         news = Parser.clean_news(dirty_news.text, agency)
                         url = news_content.find(attrs={'class': 'tgme_widget_message_date'}).get('href')
+                        regex_url_tme = re.compile('https://t.me/[-_a-z]*$')
+                        regex_url_http = re.compile("(https|http)://[-_a-zA-Z]*\.[a-zA-Z]*[^/]$")
                         tag_a = dirty_news.find('a')
                         links = tag_a.get('href').split('?utm')[0] \
                             if tag_a \
-                              and (not
-                                   tag_a.get('href').startswith((
-                                                                'tg://resolve?domain=',
-                                                                'https://t.me/+'))
-                                   and not regex_url.search(tag_a.get('href'))
-                                   ) \
+                               and (not
+                                    tag_a.get('href').startswith((
+                                        'tg://resolve?domain=',
+                                        'https://t.me/+'))
+                                    and not regex_url_tme.search(tag_a.get('href'))
+                                    and not regex_url_http.search(tag_a.get('href'))
+                                    ) \
                             else url
                         links = links.split('?')[0] if not links.startswith('https://www.youtube.com/watch') else links
                         date = parser.parse(news_content.find(attrs={'class': 'time'}).get('datetime'))
+                        news = dirty_news.text
+                        if dirty_news.b:
+                            title = dirty_news.find_all('b')
+                            title = [word.text for word in title]
+                            title = ' '.join(title)
+                            news = news.replace(title, title + '. ') if title and title.split()[0].istitle() else news
+                        news = Parser.clean_news(news, agency)
                         my_news.append({'url': url, 'date': date, 'news': news, 'links': links, 'agency': agency})
             except (ValueError, KeyError, AttributeError):
                 print(f'Обработка {agency} не удалась')
@@ -116,13 +126,21 @@ class Parser(Query):
     @staticmethod
     def clean_news(news: str, channel: str) -> str:
         """Очищает новость агентства от мусора согласно настройкам словаря black_labels"""
-        total_label = {*black_labels['common_labels'],
-                       *black_labels[channel]} if channel in black_labels.keys() else {
-            *black_labels['common_labels']}
-        news = news.replace("\xa0", ' ').replace('​​', ' ').replace('\n', '. ').strip()
+        total_label = {*black_labels[channel], *black_labels['common_labels']} if channel in black_labels.keys() \
+            else {*black_labels['common_labels']}
         for label in total_label:
             news = news.replace(label, ' ')
-        return news.strip()
+        news = news.strip(u"\uFE0F").lstrip('. ').lstrip('.')
+        news = ''.join(char for char in news if char not in emoji.EMOJI_DATA)
+        news = news.replace("\xa0", ' ')
+        news = news.replace('​​', ' ').replace("‍", ' ').replace(" ", ' ')
+        news = news.replace('\n', ' ').replace('\t', ' ')
+        news = re.sub("(https|http)://[-_.a-zA-Z0-9]*\.[a-zA-Z0-9]*/[-/_.a-zA-Z0-9]*$", " ", news)
+        news = re.sub("https://t.me/[/-_a-zA-Z0-9]*$", " ", news)
+        news = re.sub("(go.vc.ru|vc.ru)/[-/_.a-zA-Z0-9]*", " ", news)
+        news = news.lstrip('. ').lstrip('.')
+        news = re.sub(" +", " ", news).strip()
+        return news
 
 
 def go_shopping():

@@ -4,15 +4,18 @@ from imports_common import *
 
 load_dotenv()
 
-DB_NAME = os.getenv("DB_NAME")
-DB_TEST = os.getenv("DB_TEST")
+DB_ASMI = os.getenv("DB_ASMI")
+DB_SMI = os.getenv("DB_SMI")
+DB_TM = os.getenv("DB_TM")
 DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
 
 asmi = create_engine(
-    f'postgresql+psycopg2://{DB_NAME}:{DB_PASS}@{DB_HOST}/{DB_NAME}', pool_pre_ping=True)
+    f'postgresql+psycopg2://{DB_ASMI}:{DB_PASS}@{DB_HOST}/{DB_ASMI}', pool_pre_ping=True)
 smi = create_engine(
-    f'postgresql+psycopg2://{DB_TEST}:{DB_PASS}@{DB_HOST}/{DB_TEST}', pool_pre_ping=True)
+    f'postgresql+psycopg2://{DB_SMI}:{DB_PASS}@{DB_HOST}/{DB_SMI}', pool_pre_ping=True)
+time_machine = create_engine(
+    f'postgresql+psycopg2://{DB_TM}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
 
 
 class DataBaseMixin:

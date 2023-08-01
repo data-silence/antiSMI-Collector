@@ -1,6 +1,6 @@
 from shop import *
 from cook import *
-from pytz import utc
+# from pytz import utc
 from past_resume_fixer import *
 from apscheduler.schedulers.background import BlockingScheduler
 
