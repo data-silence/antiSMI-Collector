@@ -1,22 +1,31 @@
-import re
-import emoji
-from imports_shop import *
-from taste import *
-from imports_common import *
+from imports.imports import logger, random, dt, time, requests, re, BeautifulSoup, parser, EMOJI_DATA
+from imports.phrase_dicts import black_labels
 
-logger.add('debugging//debug_shop.json', format="{time} {message}", level='INFO', rotation="1 week", compression="zip",
+from scripts.db import DataBaseMixin, Query, smi, asmi
+from scripts.taste import validate_and_write_to_news_db
+
+'''This module is the Parser: it gathers news from news agencies by pre-cleaning them'''
+
+logger.add('logs/debug_shop.json', format="{time} {message}", level='INFO', rotation="1 week",
+           compression="zip",
            serialize=True)
 
 
 class AgenciesID(DataBaseMixin):
-    """Собирает словарь всех существующих id новостей для каждого агентства и работает с ним"""
+    """
+    Collects a dictionary of all existing news id's for each agency and works with it
+    Собирает словарь всех существующих id новостей для каждого агентства и работает с ним
+    """
 
     def __init__(self):
         self.ids_dict = dict()
 
     @staticmethod
     def __get_agencies_ids() -> dict:
-        """Отдаёт словарь id-новостей каждого агентства в виде {'agency': (id1, id2,...)}"""
+        """
+        Gives a dictionary of each agency's news id in the form {'agency': (id1, id2,...)}.
+        Отдаёт словарь id-новостей каждого агентства в виде {'agency': (id1, id2,...)}
+        """
         all_agencies_ids = {}
         news_ids = Query.get_all_ids(smi, 'news')
         final_ids = Query.get_all_ids(smi, 'final')
@@ -35,34 +44,44 @@ class AgenciesID(DataBaseMixin):
 
     @property
     def get_ids(self):
+        """Getter to get id's dictionary"""
         return self.ids_dict if self.ids_dict else logger.error(f'Словарь id пока не сформирован')
 
     @property
     def set_ids(self):
+        """Setter for collecting id's dictionary"""
         self.ids_dict = self.__get_agencies_ids() if not self.ids_dict else logger.error('Словарь id уже в наличие')
 
     @property
     def del_ids(self):
+        """Deleter for cleaning id's dictionary"""
         self.ids_dict.clear()
         logger.info('Словарь id новостей успешно очищен')
 
     def get_agency(self, agency):
+        """Allows you to get a dictionary of id's for the desired agency"""
         return self.ids_dict[agency]
 
 
 class Parser(Query):
-    """Класс сбора новостей: парсит новости агентства, сохраняет словарь новостей и позволяет работать с ним """
+    """
+    News gathering class: parses agency news, saves a news dictionary and allows to work with it
+    Класс сбора новостей: парсит новости агентства, сохраняет словарь новостей и позволяет работать с ним
+    """
 
     def __init__(self, channel: str, ids: tuple):
         self.channel = channel
         self.ids = ids
         self.news = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.news)
 
     def __grab_news(self) -> list[dict]:
-        """Создаёт словарь последних новостей СМИ и возвращает его"""
+        """
+        Grab the latest media news, cleans it up, creates a news dictionary and returns it
+        Создаёт словарь последних новостей СМИ и возвращает его
+        """
         my_news: list[dict] = []
         agency = self.channel
         agency_url = 'https://t.me/s/' + agency
@@ -79,29 +98,34 @@ class Parser(Query):
                     news_id = int(news_content.find(attrs={'class': 'tgme_widget_message_date'}).get('href').split('/')[
                                       -1])
                     if dirty_news and (news_id not in self.ids):
-                        news = Parser.clean_news(dirty_news.text, agency)
                         url = news_content.find(attrs={'class': 'tgme_widget_message_date'}).get('href')
                         regex_url_tme = re.compile('https://t.me/[-_a-z]*$')
-                        regex_url_http = re.compile("(https|http)://[-_a-zA-Z]*\.[a-zA-Z]*[^/]$")
+                        regex_url_http = re.compile("(https|http)://[-_a-zA-Z]*.[a-zA-Z]*[^/]$")
                         tag_a = dirty_news.find('a')
                         links = tag_a.get('href').split('?utm')[0] \
-                            if tag_a \
-                               and (not
-                                    tag_a.get('href').startswith((
-                                        'tg://resolve?domain=',
-                                        'https://t.me/+'))
-                                    and not regex_url_tme.search(tag_a.get('href'))
-                                    and not regex_url_http.search(tag_a.get('href'))
-                                    ) \
+                            if not (not tag_a or not (not
+                                                      tag_a.get('href').startswith((
+                                                          'tg://resolve?domain=',
+                                                          'https://t.me/+'))
+                                                      and not regex_url_tme.search(tag_a.get('href'))
+                                                      and not regex_url_http.search(tag_a.get('href'))
+                                                      )) \
                             else url
                         links = links.split('?')[0] if not links.startswith('https://www.youtube.com/watch') else links
                         date = parser.parse(news_content.find(attrs={'class': 'time'}).get('datetime'))
                         news = dirty_news.text
+
+                        # Bold text in a telegram often denotes a headline that needs special treatment
+                        # Жирный текст в телеграмме часто обозначает заголовок, который требует особой обработки
                         if dirty_news.b:
                             title = dirty_news.find_all('b')
                             title = [word.text for word in title]
                             title = ' '.join(title)
-                            news = news.replace(title, title + '. ') if title and title.split()[0].istitle() else news
+                            try:
+                                news = news.replace(title, title.rstrip('.') + '. ') \
+                                    if title and title.split()[0].istitle() else news
+                            except IndexError:
+                                pass
                         news = Parser.clean_news(news, agency)
                         my_news.append({'url': url, 'date': date, 'news': news, 'links': links, 'agency': agency})
             except (ValueError, KeyError, AttributeError):
@@ -125,18 +149,20 @@ class Parser(Query):
 
     @staticmethod
     def clean_news(news: str, channel: str) -> str:
-        """Очищает новость агентства от мусора согласно настройкам словаря black_labels"""
+        """
+        Cleans the agency news from garbage according to the settings of the black_labels dictionary
+        Очищает новость от мусора согласно настройкам словаря black_labels
+        """
         total_label = {*black_labels[channel], *black_labels['common_labels']} if channel in black_labels.keys() \
             else {*black_labels['common_labels']}
         for label in total_label:
             news = news.replace(label, ' ')
         news = news.strip(u"\uFE0F").lstrip('. ').lstrip('.')
-        news = ''.join(char for char in news if char not in emoji.EMOJI_DATA)
+        news = ''.join(char for char in news if char not in EMOJI_DATA)
         news = news.replace("\xa0", ' ')
         news = news.replace('​​', ' ').replace("‍", ' ').replace(" ", ' ')
         news = news.replace('\n', ' ').replace('\t', ' ')
-        news = re.sub("(https|http)://[-_.a-zA-Z0-9]*\.[a-zA-Z0-9]*/[-/_.a-zA-Z0-9]*$", " ", news)
-        news = re.sub("https://t.me/[/-_a-zA-Z0-9]*$", " ", news)
+        news = re.sub("https?://[-/_.a-zA-Z0-9]*.[-/_.a-zA-Z]*/[-/_.a-zA-Z0-9]*$", " ", news)
         news = re.sub("(go.vc.ru|vc.ru)/[-/_.a-zA-Z0-9]*", " ", news)
         news = news.lstrip('. ').lstrip('.')
         news = re.sub(" +", " ", news).strip()
@@ -164,5 +190,5 @@ def go_shopping():
 
     result_time = dt.datetime.now() - start_time
     logger.info(
-        f'Сбор завершен успешно.Получено {total_news} новостей за {round(result_time.seconds / 60, 2)} минут '
-        f'со скоростью {round(result_time.seconds / total_news, 2)}  новостей в секунду\n')
+        f'\nСбор завершен успешно. Скорость: {round(result_time.seconds / total_news, 2)}  новостей в секунду'
+        f'\nПолучено {total_news} новостей за {round(result_time.seconds / 60, 2)} минут.\n')

@@ -1,6 +1,5 @@
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text, insert, MetaData, Table, Column, Text, TIMESTAMP
-from imports_common import *
+from imports.imports import os, dt, logger, pickle, load_dotenv
+from imports.imports import create_engine, Table, MetaData, Column, Text, TIMESTAMP, text, insert
 
 load_dotenv()
 
@@ -67,6 +66,7 @@ class DataBaseMixin:
             with engine.begin() as conn:
                 ins = insert(table)
                 conn.execute(ins, data)
+            # logger.info(f'В базу {table_name} записано успешно')
         except Exception as e:
             logger.exception(e)
             filename = \
@@ -87,9 +87,9 @@ class DataBaseMixin:
             with smi.begin() as conn:
                 del_query = table.delete()
                 conn.execute(del_query)
-            logger.info(f'Временная база данных {table_name} очищена')
+            logger.info(f'Временная база данных {table_name} очищена\n')
         except Exception:
-            logger.error(f'Ошибка очистки временной базы данных {table_name}. Проведите очистку вручную.')
+            logger.error(f'Ошибка очистки временной базы данных {table_name}. Проведите очистку вручную.\n')
 
     @staticmethod
     def move(table_from, table_to, data):

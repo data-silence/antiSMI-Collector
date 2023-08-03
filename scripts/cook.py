@@ -1,13 +1,22 @@
-from imports_cook import *
-from taste import *
-from imports_common import *
+from imports.imports import logger, dt, pickle, Path, rmtree
+from imports.imports import model_resume, tokenizer_title, tokenizer_resume, model_title, model_class
 
-logger.add('debugging//debug_cook.json', format="{time} {message}", level='INFO', rotation="1 week", compression="zip",
+from scripts.db import DataBaseMixin, Query, smi
+
+'''
+This module generates new's headlines and annotations using summarization models and write full news items into db
+Модуль генерирует заголовки и аннотации с использованием моделей суммаризации и записывает полный текст новости в базу
+'''
+
+logger.add('logs/debug_cook.json', format="{time} {message}", level='INFO', rotation="1 week", compression="zip",
            serialize=True)
 
 
 def article2resume(article_text: str) -> str:
-    """Делает резюме новости с помощью модели mbart"""
+    """
+    Creates news summaries using the mbart model
+    Создаёт резюме новости с помощью модели mbart
+    """
     input_ids = tokenizer_resume(
         [article_text],
         max_length=600,
@@ -25,7 +34,10 @@ def article2resume(article_text: str) -> str:
 
 
 def article2title(summary: str) -> str:
-    """Делает заголовок из резюме с помощью модели ruT5"""
+    """
+    Creates a headline from a news summary using the ruT5 model
+    Создаёт заголовок из резюме новости с помощью модели ruT5
+    """
     input_ids = tokenizer_title(
         [summary],
         max_length=600,
@@ -44,8 +56,15 @@ def article2title(summary: str) -> str:
 
 
 def make_full_fresh_news_list() -> list:
-    """Забирает свежие новости из smi, получает из них резюме и формирует словарь свежих новостей для записи во
-    вспомогательную базу данных smi"""
+    """
+    Main function of the module | Основная функция модуля
+
+    Takes the agency's fresh news, makes a summary and headline for it, forms a dictionary to be recorded
+    into the smi auxiliary database
+
+    Забирает свежие новости агентства, делает к ним резюме и заголовок, формирует словарь свежих новостей для записи
+    во вспомогательную базу данных smi
+    """
 
     if not DataBaseMixin.is_not_empty('news'):
         logger.error(
@@ -65,26 +84,31 @@ def make_full_fresh_news_list() -> list:
         news['category'] = mono_dict[news['agency']] if news['agency'] in mono_dict.keys() else \
             model_class.predict(news['news'])[0][0].split('__')[-1]
         if news['category'] != 'other' and news['category'] != 'not_news':
+            # process only news that are not assigned to the categories not_news and other
+            # обрабатываем только новости, которым не присвоены категории not_news и other
             news['title'] = article2title(news['news'])
             news['resume'] = article2resume(news['news'])
             duration = (dt.datetime.now() - start_time).seconds
             logger_dict = {'duration': duration, 'url': news["url"]}
             logger.info(logger_dict)
-        else:
-            pass
-        # logger.error(f'{news["url"]} - не является новостью')
+
     fixed_news = [news for news in fresh_news_list if news['category'] != 'other' and news['category'] != 'not_news']
     result_time = dt.datetime.now() - start_t
-    logger.error(f'{len(fresh_news_list) - len(fixed_news)} отнесены с неновостным сообщениям и не были обработаны')
-    logger.info(f'Обработка {len(fixed_news)} новостей завершена за {round(result_time.seconds / 60, 2)} минут')
-    logger.info(
-        f'Среднее время обработки одной новости: {round(result_time.seconds / (len(fixed_news) + 0.01), 2)} сек')
+
+    logger.info('\nУспешно выполнено с результатами:')
+    logger.info(f'Обработано: {len(fixed_news)} новостей')
+    logger.info(f'Затрачено времени: {round(result_time.seconds / 60, 2)} минут')
+    logger.info(f'Время обработки одной новости: {round(result_time.seconds / (len(fixed_news) + 0.01), 2)} секунд')
+    logger.error(f'{len(fresh_news_list) - len(fixed_news)} отнесены к неновостным сообщениям и не обрабатывались')
 
     return fixed_news
 
 
 def erase_folder(folder_name: str):
-    """Очищает все файлы в заданной папке"""
+    """
+    Clears all files in the specified folder
+    Очищает все файлы в заданной папке
+    """
     for path in Path(folder_name).glob('*'):
         if path.is_dir():
             rmtree(path)
@@ -93,7 +117,12 @@ def erase_folder(folder_name: str):
 
 
 def cook_and_move_to_smi():
-    """Генерирует резюме и заголовок к свежим новостям, записывает их в базу final для проведения финальной валидации"""
+    """
+    Orchestration function of the module | Координирующая функция модуля
+
+    Generates summary and headline for fresh news, writes them into final database for final validation
+    Генерирует резюме и заголовок к свежим новостям, записывает их в базу final для проведения финальной валидации
+    """
     fresh_news_list = make_full_fresh_news_list()
     if len(fresh_news_list):
         try:
@@ -104,17 +133,4 @@ def cook_and_move_to_smi():
                 str(dt.datetime.now()).split()[0] + '-' + str(dt.datetime.now()).split()[-1].split('.')[-1]
             with open(f'pkl/{filename}.pkl', 'wb') as f:
                 pickle.dump(fresh_news_list, f)
-            logger.error(f'Не удалось записать новости в final, файл {filename} сохранён для ручной обработки')
-
-
-def check_and_move_to_asmi():
-    """Валидирует с помощью модуля taste новости в таблице final и записывает валидное в antiSMI"""
-    q = 'select * from final'
-    final_news = DataBaseMixin.get(q, smi)
-    if len(final_news):
-        try:
-            len_news = validate_and_write_to_asmi(final_news)
-            logger.info(f'Успешно записано {len_news} новостей')
-            erase_folder('pkl')
-        except Exception as e:
-            logger.exception(f'Не смог обработать из-за ошибки {e}')
+            logger.error(f'Не удалось записать новости в final, файл {filename} сохранён для ручной обработки\n')

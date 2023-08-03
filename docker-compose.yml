@@ -7,7 +7,7 @@ services:
         env_file:
             - ./.env
         restart: always
-        container_name: collector
+        container_name: antiSMI Collector
         image: maxlethal/collector
 
 
