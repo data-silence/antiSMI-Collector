@@ -15,6 +15,8 @@ black_labels = \
         'interfaxonline': ('@interfaxonline',),
         'banksta': ('@banksta',),
         'vedomosti': ('@vedomosti',),
+        'kommersant': ('@kommersant',),
+        'zubarevich': ('Наталья Зубаревич',),
         'sportrian': ('Подписаться на @sportrian',),
         'thebell_io': (
             'НАСТОЯЩИЙ МАТЕРИАЛ (ИНФОРМАЦИЯ) ПРОИЗВЕДЕН И РАСПРОСТРАНЕН ИНОСТРАННЫМ АГЕНТОМ THE BELL ЛИБО КАСАЕТСЯ '

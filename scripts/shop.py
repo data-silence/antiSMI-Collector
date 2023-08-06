@@ -143,7 +143,10 @@ class Parser(Query):
 
     @property
     def del_news(self):
-        """Очищает словарь новостей"""
+        """
+        Cleans up the news dictionary
+        Очищает словарь новостей
+        """
         self.news.clear()
         return 'Обработка источника завершена, новости удалены'
 
@@ -157,20 +160,32 @@ class Parser(Query):
             else {*black_labels['common_labels']}
         for label in total_label:
             news = news.replace(label, ' ')
+        emoji_pattern = re.compile(
+            u'(\U0001F1F2\U0001F1F4)|'  # Macau flag
+            u'([\U0001F1E6-\U0001F1FF]{2})|'  # flags
+            u'([\U0001F600-\U0001F64F])'  # emoticons
+            "+", flags=re.UNICODE)
+        news = emoji_pattern.sub('', news)
         news = news.strip(u"\uFE0F").lstrip('. ').lstrip('.')
         news = ''.join(char for char in news if char not in EMOJI_DATA)
         news = news.replace("\xa0", ' ')
         news = news.replace('​​', ' ').replace("‍", ' ').replace(" ", ' ')
         news = news.replace('\n', ' ').replace('\t', ' ')
         news = re.sub("https?://[-/_.a-zA-Z0-9]*.[-/_.a-zA-Z]*/[-/_.a-zA-Z0-9]*$", " ", news)
+        news = re.sub("https://t.me/[/-_a-zA-Z0-9]*$", " ", news)
         news = re.sub("(go.vc.ru|vc.ru)/[-/_.a-zA-Z0-9]*", " ", news)
+        news = re.sub("#[а-яА-Я]*$", " ", news)
+        news = re.sub("@[a-zA-Z]*$", " ", news)
         news = news.lstrip('. ').lstrip('.')
         news = re.sub(" +", " ", news).strip()
         return news
 
 
 def go_shopping():
-    """Основная функция сбора: собираем новости, валидируем поля на соответствие, пишем во временную базу news"""
+    """
+    Orchestrating function: collects news, validates fields for consistency, writes to the temporary news database
+    Оркестрирующая функция: собирает новости, валидирует поля на соответствие, пишет валидное во временную базу news
+    """
     total_news = 0
     start_time = dt.datetime.now()
     logger.info(f'Начинается сбор новостей от {start_time}:')
