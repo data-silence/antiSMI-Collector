@@ -23,7 +23,7 @@ def gather_past_resume():
 
     # Selecting news without summaries
     logger.info(f'Starting to process missing resumes for {start_date.month} - {start_date.day}')
-    q = f"SELECT * FROM news WHERE date::date IN ({in_str}) AND resume IS NULL"
+    q = f"SELECT * FROM news WHERE date::date IN ({in_str}) AND (resume IS NULL OR resume = '')"
     date_news = DataBaseMixin.get(q, time_machine)
 
     for i, news in enumerate(reversed(date_news)):

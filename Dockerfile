@@ -13,6 +13,6 @@ COPY backups/ /app/backups/
 
 
 LABEL authors="maxlethal"
-LABEL app_name='antiSMI Collector'
+LABEL app_name='collector'
 
 ENTRYPOINT ["python3", "main.py"]

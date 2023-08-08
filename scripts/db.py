@@ -9,19 +9,31 @@ DB_TM = os.getenv("DB_TM")
 DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
 
+# engines for work with project's databases:
+
+# main news databases
 asmi = create_engine(
     f'postgresql+psycopg2://{DB_ASMI}:{DB_PASS}@{DB_HOST}/{DB_ASMI}', pool_pre_ping=True)
+# auxiliary news databases
 smi = create_engine(
     f'postgresql+psycopg2://{DB_SMI}:{DB_PASS}@{DB_HOST}/{DB_SMI}', pool_pre_ping=True)
+# archive database, contains news for more than 20 years
 time_machine = create_engine(
     f'postgresql+psycopg2://{DB_TM}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
 
 
 class DataBaseMixin:
-    """Набор универсальных функций для работы с базами данных"""
+    """
+    Contains a set of universal functions for working with databases
+    Содержит набор универсальных функций для работы с базами данных
+    """
 
     @staticmethod
-    def get_table(engine, table_name):
+    def get_table(engine, table_name: str):
+        """
+        Defines the metadata structure for the table so that you can work with it via ORM
+        Определяет структуру метаданных для таблицы, чтобы можно было с ней работать через ORM
+        """
         table_small = Table(table_name, MetaData(),
                             Column('url', Text),
                             Column('date', TIMESTAMP),
@@ -44,14 +56,23 @@ class DataBaseMixin:
         return table_small if engine == smi and table_name == 'news' else table_big
 
     @staticmethod
-    def is_not_empty(table_name):
+    def is_not_empty(table_name: str):
+        """
+        Checks the table for records in it
+        Проверяет таблицу на наличие записей в ней
+        """
         q = f'SELECT * FROM {table_name} LIMIT 1'
         result = DataBaseMixin.get(q, smi)
         return True if result != [] else False
 
     @staticmethod
-    def get(query, engine):
-        """Принимает запрос в БД и возвращает результат его исполнения"""
+    def get(query: str, engine) -> list[dict]:
+        """
+        db -> data as a list of dicts
+
+        Accepts a query in the database and returns the result of its execution
+        Принимает запрос в БД и возвращает результат его исполнения
+        """
         with engine.begin() as conn:
             query_text = text(query)
             result_set = conn.execute(query_text)
@@ -59,8 +80,13 @@ class DataBaseMixin:
             return results_as_dict
 
     @staticmethod
-    def record(engine, table_name, data):
-        """Принимает запрос на запись списка кортежей в БД и производит запись"""
+    def record(engine, table_name: str, data: list[dict]):
+        """
+        data -> db.table_name
+
+        Receives a request to write a list of dicts to the database and writes the request
+        Принимает запрос на запись списка словарей в БД и производит запись
+        """
         try:
             table = DataBaseMixin.get_table(engine, table_name)
             with engine.begin() as conn:
@@ -73,15 +99,20 @@ class DataBaseMixin:
                 table_name + \
                 '-' + str(dt.datetime.now()).split()[0] + \
                 '-' + str(dt.datetime.now()).split()[-1].split('.')[-1]
-            with open(f'pkl/{filename}.pkl', 'wb') as f:
+            with open(f'backups/{filename}.pkl', 'wb') as f:
                 pickle.dump(data, f)
             logger.error(e)
         # logger.error(
         # 	f'Отказ записи в {table_name}. Ваши данные сохранены в файл {filename}.pkl. Запишите их вручную')
 
     @staticmethod
-    def erase(table_name):
-        """Принимает запрос в БД и возвращает результат его исполнения"""
+    def erase(table_name: str):
+        """
+        full.db.table_name - > empty.db.table.name
+
+        Deletes all records from the specified table
+        Удаляет все записи из указываемой таблицы
+        """
         try:
             table = DataBaseMixin.get_table(smi, table_name)
             with smi.begin() as conn:
@@ -92,19 +123,32 @@ class DataBaseMixin:
             logger.error(f'Ошибка очистки временной базы данных {table_name}. Проведите очистку вручную.\n')
 
     @staticmethod
-    def move(table_from, table_to, data):
-        """Перемещает данные в новую таблицу, очищая данные в прежней. Сама обработка данных происходит во вне"""
+    def move(table_from: str, table_to: str, data: list[dict]):
+        """
+        db.old.is_full, db.new
+        db.old - data- > db.new
+        db.old.is_empty, db.new.is_full
+
+        Moves data to a new table, clearing the data in the previous table.
+        Перемещает данные в новую таблицу, очищая данные в прежней. Сама обработка данных происходит во вне
+        """
         engine = smi if table_to == 'final' else asmi
         DataBaseMixin.record(engine, table_to, data)
         DataBaseMixin.erase(table_from)
 
 
 class Query(DataBaseMixin):
-    """Универсальные и базовые запросы к базам данных, используемые в основном коде"""
+    """
+    Contains universal and basic database queries used in the main code
+    Содержит универсальные и базовые запросы к базам данных, используемые в основном коде
+    """
 
     @staticmethod
     def get_monocategory_dict() -> dict:
-        """Формирует словарь специализированных каналов, которые являются поставщиком одной категории новостей"""
+        """
+        Builds a dictionary of specialized channels that are providers of only one news category
+        Формирует словарь специализированных каналов, которые являются поставщиком только одной категории новостей
+        """
         query_mono_category = \
             "SELECT telegram, mono_category FROM agencies WHERE is_parsing = True and not mono_category = 'None'"
         mono_category_alchemy = DataBaseMixin.get(query_mono_category, asmi)
@@ -113,8 +157,11 @@ class Query(DataBaseMixin):
         return mono_dict
 
     @staticmethod
-    def get_last_news_id():
-        """Формирует словарь последних id-новостей для каждого агентства"""
+    def get_last_news_id() -> dict:
+        """
+        Builds a dictionary of recent id-news for each agency
+        Формирует словарь последних id-новостей для каждого агентства
+        """
         last_agencies_url_query = \
             "WITH t1 as (SELECT DISTINCT agency, max(date) OVER (PARTITION BY agency) as date FROM news) " \
             "SELECT t1.agency, url FROM t1 JOIN news USING(date) WHERE t1.agency = news.agency"
@@ -138,7 +185,10 @@ class Query(DataBaseMixin):
 
     @staticmethod
     def get_all_articles_dict(engine) -> dict:
-        """Формирует словарь всех существующих id статей в разрезе каждого агентства"""
+        """
+        Builds a dictionary of all existing article id's by each agency
+        Формирует словарь всех существующих id статей в разрезе каждого агентства
+        """
         base_to = 'final' if engine == smi else 'news'
         all_agencies_articles = {}
         query = f"SELECT agency, url FROM {base_to}"
@@ -155,7 +205,11 @@ class Query(DataBaseMixin):
         return all_agencies_articles
 
     @staticmethod
-    def get_all_ids(engine, base_to) -> list:
+    def get_all_ids(engine, base_to) -> dict:
+        """
+        Builds a dictionary of all existing article id's
+        Формирует словарь всех существующих id статей
+        """
         query = f"SELECT agency, split_part(url, '/', 5)::int AS id FROM {base_to}"
         query_result = DataBaseMixin.get(query, engine)
         return query_result
