@@ -11,8 +11,8 @@ It is a parser of "fresh" news from news agencies into database for further use 
 ### Collector's structure:
 
 **main.py** serves as an interface for managing 3 modules from _scripts_ directory:
-- **shop.py**: parses news from news agencies (like news "shopping")
-- **cook.py**: generates titles and summaries for news collected by the shop.py module (like news "cooking")
+- **shop.py**: parses news from news agencies (similar to news "shopping")
+- **cook.py**: generates titles and summaries for news collected by the shop.py module (similar to news "cooking")
 - **taste.py**: validates "prepared" news for compliance with field types in databases and recording only correct data
 
 There are two additional modules in the scripts folder:
