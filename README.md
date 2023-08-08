@@ -8,7 +8,7 @@ It is a parser of "fresh" news from news agencies into database for further use 
 
 ![AntiSMI structure](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/AntiSMI%20structure.png)
 
-### Collector structure:
+### Collector's structure:
 
 **main.py** serves as an interface for managing 3 modules from _scripts_ directory:
 - **shop.py**: parses news from news agencies (like news "shopping")
