@@ -19,7 +19,9 @@ class ShortNewsFields(BaseModel):
     """
     url: HttpUrl
     date: dt.datetime
-    news: str = Field(..., min_length=1)  # отсеваем пустые столбцы
+    # clear the empty columns
+    # убираем пустые столбцы
+    news: str = Field(..., min_length=1)
     links: HttpUrl
     agency: str
 
@@ -60,7 +62,7 @@ class AsmiFields(BaseModel):
     category: CategoryEnum
     # clear the empty columns
     # убираем пустые столбцы
-    news: str = Field(..., min_length=1)  # "'...' - required
+    news: str = Field(..., min_length=1)
     links: HttpUrl
     agency: str
 

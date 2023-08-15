@@ -1,10 +1,13 @@
-from imports.imports import logger, random, dt, time, requests, re, BeautifulSoup, parser, EMOJI_DATA
+from imports.imports import logger, random, dt, time, relativedelta, requests, BeautifulSoup, parser, EMOJI_DATA, re
 from imports.phrase_dicts import black_labels
 
 from scripts.db import DataBaseMixin, Query, smi, asmi
 from scripts.taste import validate_and_write_to_news_db
 
-'''This module is the Parser: it gathers news from news agencies by pre-cleaning them'''
+'''
+This module is the Parser: it gathers news from news agencies by pre-cleaning them
+Это Парсер: собирает новости от информационных агентств, предварительно очищая их
+'''
 
 logger.add('logs/debug_shop.json', format="{time} {message}", level='INFO', rotation="1 week",
            compression="zip",
@@ -112,7 +115,8 @@ class Parser(Query):
                                                       )) \
                             else url
                         links = links.split('?')[0] if not links.startswith('https://www.youtube.com/watch') else links
-                        date = parser.parse(news_content.find(attrs={'class': 'time'}).get('datetime'))
+                        date = (parser.parse(news_content.find(attrs={'class': 'time'}).get('datetime'), ignoretz=True)
+                                + relativedelta(hours=3))
                         news = dirty_news.text
 
                         # Bold text in a telegram often denotes a headline that needs special treatment

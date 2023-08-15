@@ -6,6 +6,7 @@ load_dotenv()
 DB_ASMI = os.getenv("DB_ASMI")
 DB_SMI = os.getenv("DB_SMI")
 DB_TM = os.getenv("DB_TM")
+DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
 
@@ -13,13 +14,13 @@ DB_HOST = os.getenv("DB_HOST")
 
 # main news databases
 asmi = create_engine(
-    f'postgresql+psycopg2://{DB_ASMI}:{DB_PASS}@{DB_HOST}/{DB_ASMI}', pool_pre_ping=True)
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_ASMI}', pool_pre_ping=True)
 # auxiliary news databases
 smi = create_engine(
-    f'postgresql+psycopg2://{DB_SMI}:{DB_PASS}@{DB_HOST}/{DB_SMI}', pool_pre_ping=True)
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_SMI}', pool_pre_ping=True)
 # archive database, contains news for more than 20 years
 time_machine = create_engine(
-    f'postgresql+psycopg2://{DB_TM}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
 
 
 class DataBaseMixin:
@@ -205,7 +206,7 @@ class Query(DataBaseMixin):
         return all_agencies_articles
 
     @staticmethod
-    def get_all_ids(engine, base_to) -> dict:
+    def get_all_ids(engine, base_to) -> list[dict]:
         """
         Builds a dictionary of all existing article id's
         Формирует словарь всех существующих id статей

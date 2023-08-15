@@ -1,6 +1,6 @@
+/backups/
 /logs/
 /models/
-/pkl/
 /proxy/
 /.env
 pyproject.toml

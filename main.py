@@ -51,13 +51,13 @@ if __name__ == '__main__':
         # fixing()
         scheduler = BlockingScheduler()
         scheduler.configure(timezone='Europe/Moscow')
-        scheduler.add_job(fixing, 'cron', hour=0, id='fixer',
+        scheduler.add_job(fixing, 'cron', hour=0, minute=1, id='fixer',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(shopping, 'cron', hour='6-22', minute=56, id='shopper',
+        scheduler.add_job(shopping, 'cron', hour='6-20, 23', minute=56, id='shopper',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(cooking, 'cron', hour='7-23', id='cooker',
+        scheduler.add_job(cooking, 'cron', hour='7-21, 0', id='cooker',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(serving, 'cron', hour='9-21/4, 23', minute=55, id='server',
+        scheduler.add_job(serving, 'cron', hour='9-21/4, 0', minute=55, id='server',
                           max_instances=10, misfire_grace_time=600)
         scheduler.start()
 
