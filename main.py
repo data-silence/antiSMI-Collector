@@ -18,7 +18,7 @@ There are two additional modules in the scripts folder:
 - fix.py: optional auxiliary module, fixes problems with tomorrow article's resumes in the past (don't ask)
 
 News from database is used by antiSMI-Bot (to create and send personal smart news digest via telegram interface) and 
-by antiSMI-Monitor (to research social trends and to create NLP models)
+by antiSMI-Observer (to research social trends and to create NLP models)
 '''
 
 
