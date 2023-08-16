@@ -1,4 +1,5 @@
 # antiSMI-Collector
+![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/Parser%20stats.png?raw=true)
 
 ## Table of contents
 
@@ -14,7 +15,7 @@
 
 The Collector is one of three parts of the [AntiSMI Project](https://github.com/maxlethal/antiSMI-Project).
 
-It is a parser of "fresh" news from news agencies into database for further use within the Project by other's parts:
+It is designed to constantly collect fresh news from various sources, process and store them for further use within the Project by other's parts:
 * [Bot](https://github.com/maxlethal/antiSMI-Bot) - to create and send personal smart news digest via telegram interface 
 * **Observer** - to research social trends, make dashboards and to create NLP models
 
@@ -25,9 +26,6 @@ In news processing, trained machine learning models are used to categorize the n
 * **Capacity:** 40 news agencies, 500 news/day
 * **Bot database capacity:** > 100,000 news articles [07.2022 - today]
 * **Archive base capacity:** > 1.5 million articles [08.1999 - 04.2019]
-
-![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/Parser%20stats.png?raw=true)
-
 
 ## Stack
 
