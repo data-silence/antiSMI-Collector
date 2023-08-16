@@ -7,7 +7,7 @@ It is a parser of "fresh" news from news agencies into database for further use 
 * **Observer** - to research social trends, make dashboards and to create NLP models
 
 ## Stats
-![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/AntiSMI%20structure%20small.png)
+![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/Parser%20stats.png?raw=true)
 
 
 ## Stack and Tools
