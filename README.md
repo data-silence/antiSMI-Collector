@@ -1,40 +1,61 @@
 # antiSMI-Collector
 
+## Table of contents
+
+* [About](#about)
+* [Stats](#stats)
+* [Stack](#stack)
+* [ML models](#ml-models)
+* [Development Tools](#development-tools)
+* [Code's structure](#code-structure)
+
+
+## About
+
 The Collector is one of three parts of the [AntiSMI Project](https://github.com/maxlethal/antiSMI-Project).
 
 It is a parser of "fresh" news from news agencies into database for further use within the Project by other's parts:
 * [Bot](https://github.com/maxlethal/antiSMI-Bot) - to create and send personal smart news digest via telegram interface 
 * **Observer** - to research social trends, make dashboards and to create NLP models
 
+In news processing, trained machine learning models are used to categorize the news and create its summary and title.
+
 ## Stats
+* **Start:** 2022-07-01 [project suspended for 2 months in 2022]
+* **Capacity:** 40 news agencies, 500 news/day
+* **Bot database capacity:** > 100,000 news articles [07.2022 - today]
+* **Archive base capacity:** > 1.5 million articles [08.1999 - 04.2019]
+
 ![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/Parser%20stats.png?raw=true)
 
 
-## Stack and Tools
+## Stack
 
 * **Language:** python, sql 
 * **Databases:** postgreSQL, sqlalchemy
 * **Validation:** pydantic
 * **Logging:** loguru
 * **BI**: apache SuperSet
+* **Scraping:**  requests, Beatufill Soup 4
 
-- **Scraping:**
-    - requests
-    - beatufill soup 4
+## ML models:
+
 - **Summarization:**
     - mBart, Seq2Seq, pre-trained [news summary]
     - ruT5, pre-trained [headline]
 - **Categorization:**
     - fasttext, supervised pre-training, 7 classes (categories)
 
-- **Development Tools:**
+**Clustering** problems are solved by [AntiSMI-Bot](https://github.com/maxlethal/antiSMI-Bot).
+
+## Development Tools:
 - Pycharm
 - Docker
 - GitHub
 - Linux shell
 
 
-## Code's structure:
+## Code structure:
 
 **main.py** serves as an interface for managing 3 modules from _scripts_ directory:
 - **shop.py**: parses news from news agencies (similar to news "shopping")
