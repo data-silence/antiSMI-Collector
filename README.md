@@ -4,7 +4,7 @@ The Collector is one of three parts of the [AntiSMI Project](https://github.com/
 
 It is a parser of "fresh" news from news agencies into database for further use within the Project by other's parts:
 * [Bot](https://github.com/maxlethal/antiSMI-Bot) - to create and send personal smart news digest via telegram interface 
-* **Monitor** - to research social trends, make dashboards and to create NLP models
+* **Observer** - to research social trends, make dashboards and to create NLP models
 
 ![AntiSMI structure](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/AntiSMI%20structure%20small.png)
 
