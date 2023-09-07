@@ -1,13 +1,10 @@
-from imports.imports import logger, random, dt, time, relativedelta, requests, BeautifulSoup, parser, EMOJI_DATA, re
+from imports.imports import logger, random, dt, time, relativedelta, requests, re, BeautifulSoup, parser, EMOJI_DATA
 from imports.phrase_dicts import black_labels
 
-from scripts.db import DataBaseMixin, Query, smi, asmi
+from scripts.db import DataBaseMixin, Query, smi, asmi, rest
 from scripts.taste import validate_and_write_to_news_db
 
-'''
-This module is the Parser: it gathers news from news agencies by pre-cleaning them
-Это Парсер: собирает новости от информационных агентств, предварительно очищая их
-'''
+'''This module is the Parser: it gathers news from news agencies by pre-cleaning them'''
 
 logger.add('logs/debug_shop.json', format="{time} {message}", level='INFO', rotation="1 week",
            compression="zip",
@@ -20,23 +17,35 @@ class AgenciesID(DataBaseMixin):
     Собирает словарь всех существующих id новостей для каждого агентства и работает с ним
     """
 
-    def __init__(self):
+    def __init__(self, eng_name: str = 'smi'):
         self.ids_dict = dict()
+        self.engine = smi if eng_name == 'smi' else rest
 
-    @staticmethod
-    def __get_agencies_ids() -> dict:
+    # @staticmethod
+    def __get_agencies_ids(self) -> dict:
         """
         Gives a dictionary of each agency's news id in the form {'agency': (id1, id2,...)}.
         Отдаёт словарь id-новостей каждого агентства в виде {'agency': (id1, id2,...)}
         """
+
         all_agencies_ids = {}
-        news_ids = Query.get_all_ids(smi, 'news')
-        final_ids = Query.get_all_ids(smi, 'final')
-        error_ids = Query.get_all_ids(smi, 'error_table')
-        asmi_ids = Query.get_all_ids(asmi, 'news')
-        total_ids = [*news_ids, *final_ids, *error_ids, *asmi_ids]
-        all_active_agencies_query = "SELECT telegram FROM agencies WHERE is_parsing is True"
-        all_active_agencies = DataBaseMixin.get(all_active_agencies_query, asmi)
+
+        if self.engine == smi:
+            news_ids = Query.get_all_ids(smi, 'news')
+            final_ids = Query.get_all_ids(smi, 'final')
+            error_ids = Query.get_all_ids(smi, 'error_table')
+            asmi_ids = Query.get_all_ids(asmi, 'news')
+            total_ids = [*news_ids, *final_ids, *error_ids, *asmi_ids]
+            all_active_agencies_query = "SELECT telegram FROM agencies WHERE is_parsing is True"
+            all_active_agencies = DataBaseMixin.get(all_active_agencies_query, asmi)
+        else:
+            news_ids = Query.get_all_ids(rest, 'news')
+            error_ids = Query.get_all_ids(smi, 'error_table')
+            total_ids = [*news_ids, *error_ids]
+            # Подумать над структурой таблицы и запросом!!!
+            all_active_agencies_query = ("SELECT telegram FROM agencies WHERE language <> '' and is_parsing is FALSE "
+                                         "and priority <> 6")
+            all_active_agencies = DataBaseMixin.get(all_active_agencies_query, asmi)
 
         for agency in all_active_agencies:
             articles_ids = tuple(
@@ -115,9 +124,12 @@ class Parser(Query):
                                                       )) \
                             else url
                         links = links.split('?')[0] if not links.startswith('https://www.youtube.com/watch') else links
+                        links = links if links and links != '' else url
                         date = (parser.parse(news_content.find(attrs={'class': 'time'}).get('datetime'), ignoretz=True)
                                 + relativedelta(hours=3))
                         news = dirty_news.text
+                        if agency == 'briefsmi':
+                            news = news.split(': ')[-1].split('#')[0]
 
                         # Bold text in a telegram often denotes a headline that needs special treatment
                         # Жирный текст в телеграмме часто обозначает заголовок, который требует особой обработки
@@ -132,8 +144,9 @@ class Parser(Query):
                                 pass
                         news = Parser.clean_news(news, agency)
                         my_news.append({'url': url, 'date': date, 'news': news, 'links': links, 'agency': agency})
-            except (ValueError, KeyError, AttributeError):
+            except (ValueError, KeyError, AttributeError) as e:
                 print(f'Обработка {agency} не удалась')
+                print(e)
 
         return my_news
 
@@ -190,24 +203,28 @@ def go_shopping():
     Orchestrating function: collects news, validates fields for consistency, writes to the temporary news database
     Оркестрирующая функция: собирает новости, валидирует поля на соответствие, пишет валидное во временную базу news
     """
-    total_news = 0
-    start_time = dt.datetime.now()
-    logger.info(f'Начинается сбор новостей от {start_time}:')
 
-    agencies_ids = AgenciesID()
-    agencies_ids.set_ids
-    for channel, ids_tuple in agencies_ids.get_ids.items():
-        channel = Parser(channel, ids_tuple)
-        channel.set_news
-        if len(channel):
-            len_news = validate_and_write_to_news_db(channel.get_news)
-            logger.info(f'{channel.channel}: собрано {len_news} новостей')
-            total_news += len_news
-            channel.del_news
-            time.sleep(random.randint(1, 3))
-    agencies_ids.del_ids
+    engines = ('rest', 'smi')
 
-    result_time = dt.datetime.now() - start_time
-    logger.info(
-        f'\nСбор завершен успешно. Скорость: {round(result_time.seconds / total_news, 2)}  новостей в секунду'
-        f'\nПолучено {total_news} новостей за {round(result_time.seconds / 60, 2)} минут.\n')
+    for engine in engines:
+        total_news = 0
+        start_time = dt.datetime.now()
+        logger.info(f'Начинается сбор новостей в {engine} от {start_time}:')
+
+        agencies_ids = AgenciesID(eng_name=engine)
+        agencies_ids.set_ids
+        for channel, ids_tuple in agencies_ids.get_ids.items():
+            channel = Parser(channel, ids_tuple)
+            channel.set_news
+            if len(channel):
+                len_news = validate_and_write_to_news_db(channel.get_news, engine)
+                logger.info(f'{channel.channel}: собрано {len_news} новостей')
+                total_news += len_news
+                channel.del_news
+                time.sleep(random.randint(1, 3))
+        agencies_ids.del_ids
+
+        result_time = dt.datetime.now() - start_time
+        logger.info(
+            f'\nСбор завершен успешно. Скорость: {round(result_time.seconds / total_news, 2)}  новостей в секунду'
+            f'\nПолучено {total_news} новостей за {round(result_time.seconds / 60, 2)} минут.\n')

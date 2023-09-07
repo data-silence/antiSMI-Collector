@@ -6,6 +6,7 @@ load_dotenv()
 DB_ASMI = os.getenv("DB_ASMI")
 DB_SMI = os.getenv("DB_SMI")
 DB_TM = os.getenv("DB_TM")
+DB_REST = os.getenv("DB_REST")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
@@ -21,6 +22,8 @@ smi = create_engine(
 # archive database, contains news for more than 20 years
 time_machine = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
+rest = create_engine(
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_REST}', pool_pre_ping=True)
 
 
 class DataBaseMixin:

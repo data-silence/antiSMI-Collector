@@ -1,6 +1,6 @@
 from imports.imports import dt, logger, BaseModel, HttpUrl, Field, Enum
 
-from scripts.db import DataBaseMixin, smi
+from scripts.db import DataBaseMixin, smi, rest
 from scripts.cook import erase_folder
 
 '''
@@ -19,9 +19,7 @@ class ShortNewsFields(BaseModel):
     """
     url: HttpUrl
     date: dt.datetime
-    # clear the empty columns
-    # убираем пустые столбцы
-    news: str = Field(..., min_length=1)
+    news: str = Field(..., min_length=1)  # отсеваем пустые столбцы
     links: HttpUrl
     agency: str
 
@@ -62,7 +60,7 @@ class AsmiFields(BaseModel):
     category: CategoryEnum
     # clear the empty columns
     # убираем пустые столбцы
-    news: str = Field(..., min_length=1)
+    news: str = Field(..., min_length=1)  # "'...' - required
     links: HttpUrl
     agency: str
 
@@ -78,14 +76,15 @@ class AsmiModel(BaseModel):
     dicts_list: list[AsmiFields]
 
 
-def validate_and_write_to_news_db(news_list: list[ShortNewsFields]) -> int:
+def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: str) -> int:
     """
     Basic function for validating and writing news to temporary databases
     Основная функция для валидации и записи новостей во временные базы данных
     """
+    engine = smi if eng_name == 'smi' else rest
     try:
         validator_model = ShortModel(dicts_list=news_list)
-        DataBaseMixin.record(smi, 'news', news_list)
+        DataBaseMixin.record(engine=engine, table_name='news', data=news_list)
         len_news = len(news_list)
     except ValueError:
         record_list = []
@@ -97,7 +96,7 @@ def validate_and_write_to_news_db(news_list: list[ShortNewsFields]) -> int:
             except ValueError:
                 logger.error(news)
                 error_list.append(news)
-        DataBaseMixin.record(smi, 'news', record_list)
+        DataBaseMixin.record(engine, 'news', record_list)
         DataBaseMixin.record(smi, 'error_table', error_list)
         len_news = len(record_list)
     return len_news
