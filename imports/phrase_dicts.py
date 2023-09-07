@@ -20,5 +20,8 @@ black_labels = \
         'sportrian': ('Подписаться на @sportrian',),
         'thebell_io': (
             'НАСТОЯЩИЙ МАТЕРИАЛ (ИНФОРМАЦИЯ) ПРОИЗВЕДЕН И РАСПРОСТРАНЕН ИНОСТРАННЫМ АГЕНТОМ THE BELL ЛИБО КАСАЕТСЯ '
-            'ДЕЯТЕЛЬНОСТИ ИНОСТРАННОГО АГЕНТА THE BELL.', 'Подписывайтесь на The Bell',)
+            'ДЕЯТЕЛЬНОСТИ ИНОСТРАННОГО АГЕНТА THE BELL.', 'Подписывайтесь на The Bell',),
+        'moscowtimes_ru': ('Подписаться на канал | Подписаться на рассылку',),
+        'techinsiderru': ('Techinsider (https://t.me/techinsiderru)', 'Techinsider',),
+
     }

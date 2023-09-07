@@ -76,24 +76,24 @@ def make_full_fresh_news_list() -> list:
     all_fresh_news_alchemy = DataBaseMixin.get(all_fresh_news_query, smi)
     fresh_news_list = [dict(fresh_news) for fresh_news in all_fresh_news_alchemy if 'url' in dict(fresh_news).keys()]
 
-    start_t = dt.datetime.now()
-    logger.info(f'Начинается обработка новостей от {start_t}:')
+    start_time = dt.datetime.now()
+    logger.info(f'Начинается обработка новостей от {start_time}:')
 
-    for news in fresh_news_list:
-        start_time = dt.datetime.now()
-        news['category'] = mono_dict[news['agency']] if news['agency'] in mono_dict.keys() else \
-            model_class.predict(news['news'])[0][0].split('__')[-1]
-        if news['category'] != 'other' and news['category'] != 'not_news':
+    for i, news in enumerate(fresh_news_list):
+        category = model_class.predict(news['news'])[0][0].split('__')[-1]
+        if category not in ('other', 'not_news'):
             # process only news that are not assigned to the categories not_news and other
             # обрабатываем только новости, которым не присвоены категории not_news и other
+            begin_time = dt.datetime.now()
+            news['category'] = mono_dict[news['agency']] if news['agency'] in mono_dict.keys() else category
             news['title'] = article2title(news['news'])
             news['resume'] = article2resume(news['news'])
-            duration = (dt.datetime.now() - start_time).seconds
-            logger_dict = {'duration': duration, 'url': news["url"]}
+            duration = (dt.datetime.now() - begin_time).seconds
+            logger_dict = {'position': f'{i + 1}/{len(fresh_news_list)}', 'duration': duration, 'url': news["url"]}
             logger.info(logger_dict)
 
-    fixed_news = [news for news in fresh_news_list if news['category'] != 'other' and news['category'] != 'not_news']
-    result_time = dt.datetime.now() - start_t
+    fixed_news = [news for news in fresh_news_list if 'category' in news]
+    result_time = dt.datetime.now() - start_time
 
     logger.info('\nУспешно выполнено с результатами:')
     logger.info(f'Обработано: {len(fixed_news)} новостей')
