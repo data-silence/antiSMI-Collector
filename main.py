@@ -18,7 +18,7 @@ There are two additional modules in the scripts folder:
 - fix.py: optional auxiliary module, fixes problems with tomorrow article's resumes in the past (don't ask)
 
 News from database is used by antiSMI-Bot (to create and send personal smart news digest via telegram interface) and 
-by antiSMI-Observer (to research social trends and to create NLP models)
+by antiSMI-Monitor (to research social trends and to create NLP models)
 '''
 
 
@@ -45,19 +45,21 @@ def fixing():
 
 if __name__ == '__main__':
     try:
+        # The part that serves for debugging the work of individual modules
         # shopping()
         # cooking()
         # serving()
         # fixing()
+
         scheduler = BlockingScheduler()
         scheduler.configure(timezone='Europe/Moscow')
-        scheduler.add_job(fixing, 'cron', hour=0, minute=1, id='fixer',
+        scheduler.add_job(fixing, 'cron', hour=0, minute=0, id='fixer',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(shopping, 'cron', hour='6-20, 23', minute=56, id='shopper',
+        scheduler.add_job(shopping, 'cron', hour='6-21, 23', minute=55, second=10, id='shopper',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(cooking, 'cron', hour='7-21, 0', id='cooker',
+        scheduler.add_job(cooking, 'cron', hour='0, 7-21', id='cooker',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(serving, 'cron', hour='9-21/4, 0', minute=55, id='server',
+        scheduler.add_job(serving, 'cron', hour='9-21/4, 23', minute=55, id='server',
                           max_instances=10, misfire_grace_time=600)
         scheduler.start()
 
