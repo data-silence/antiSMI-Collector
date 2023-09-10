@@ -1,6 +1,6 @@
 from imports.imports import dt, logger, BaseModel, HttpUrl, Field, Enum
 
-from scripts.db import DataBaseMixin, smi, rest
+from scripts.db import DataBaseMixin, russian, foreign
 from scripts.cook import erase_folder
 
 '''
@@ -81,7 +81,7 @@ def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: st
     Basic function for validating and writing news to temporary databases
     Основная функция для валидации и записи новостей во временные базы данных
     """
-    engine = smi if eng_name == 'smi' else rest
+    engine = russian if eng_name == 'russian' else foreign
     try:
         validator_model = ShortModel(dicts_list=news_list)
         DataBaseMixin.record(engine=engine, table_name='news', data=news_list)
@@ -97,7 +97,7 @@ def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: st
                 logger.error(news)
                 error_list.append(news)
         DataBaseMixin.record(engine, 'news', record_list)
-        DataBaseMixin.record(smi, 'error_table', error_list)
+        DataBaseMixin.record(russian, 'error_table', error_list)
         len_news = len(record_list)
     return len_news
 
@@ -130,7 +130,7 @@ def check_and_move_to_asmi():
     final.db news -> validator -> antiSMI.db
     """
     q = 'select * from final'
-    final_news = DataBaseMixin.get(q, smi)
+    final_news = DataBaseMixin.get(q, russian)
     if len(final_news):
         try:
             len_news = validate_and_write_to_asmi(final_news)

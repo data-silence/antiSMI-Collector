@@ -4,9 +4,10 @@ from imports.imports import create_engine, Table, MetaData, Column, Text, TIMEST
 load_dotenv()
 
 DB_ASMI = os.getenv("DB_ASMI")
-DB_SMI = os.getenv("DB_SMI")
+DB_RUS = os.getenv("DB_RUS")
+DB_FOREIGN = os.getenv("DB_FOREIGN")
 DB_TM = os.getenv("DB_TM")
-DB_REST = os.getenv("DB_REST")
+
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
@@ -17,13 +18,13 @@ DB_HOST = os.getenv("DB_HOST")
 asmi = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_ASMI}', pool_pre_ping=True)
 # auxiliary news databases
-smi = create_engine(
-    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_SMI}', pool_pre_ping=True)
+russian = create_engine(
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_RUS}', pool_pre_ping=True)
+foreign = create_engine(
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_FOREIGN}', pool_pre_ping=True)
 # archive database, contains news for more than 20 years
 time_machine = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)
-rest = create_engine(
-    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_REST}', pool_pre_ping=True)
 
 
 class DataBaseMixin:
@@ -57,7 +58,7 @@ class DataBaseMixin:
                           Column('agency', Text),
                           extend_existing=True,
                           autoload_with=engine)
-        return table_small if engine == smi and table_name == 'news' else table_big
+        return table_small if engine == russian and table_name == 'news' else table_big
 
     @staticmethod
     def is_not_empty(table_name: str):
@@ -66,7 +67,7 @@ class DataBaseMixin:
         Проверяет таблицу на наличие записей в ней
         """
         q = f'SELECT * FROM {table_name} LIMIT 1'
-        result = DataBaseMixin.get(q, smi)
+        result = DataBaseMixin.get(q, russian)
         return True if result != [] else False
 
     @staticmethod
@@ -118,11 +119,11 @@ class DataBaseMixin:
         Удаляет все записи из указываемой таблицы
         """
         try:
-            table = DataBaseMixin.get_table(smi, table_name)
-            with smi.begin() as conn:
+            table = DataBaseMixin.get_table(russian, table_name)
+            with russian.begin() as conn:
                 del_query = table.delete()
                 conn.execute(del_query)
-            logger.info(f'Временная база данных {table_name} очищена\n')
+            logger.info(f'Временная база данных {table_name} очищена')
         except Exception:
             logger.error(f'Ошибка очистки временной базы данных {table_name}. Проведите очистку вручную.\n')
 
@@ -136,7 +137,7 @@ class DataBaseMixin:
         Moves data to a new table, clearing the data in the previous table.
         Перемещает данные в новую таблицу, очищая данные в прежней. Сама обработка данных происходит во вне
         """
-        engine = smi if table_to == 'final' else asmi
+        engine = russian if table_to == 'final' else asmi
         DataBaseMixin.record(engine, table_to, data)
         DataBaseMixin.erase(table_from)
 
@@ -193,7 +194,7 @@ class Query(DataBaseMixin):
         Builds a dictionary of all existing article id's by each agency
         Формирует словарь всех существующих id статей в разрезе каждого агентства
         """
-        base_to = 'final' if engine == smi else 'news'
+        base_to = 'final' if engine == russian else 'news'
         all_agencies_articles = {}
         query = f"SELECT agency, url FROM {base_to}"
         query_result = DataBaseMixin.get(query, engine)

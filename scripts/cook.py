@@ -1,7 +1,7 @@
 from imports.imports import logger, dt, pickle, Path, rmtree
 from imports.imports import model_resume, tokenizer_title, tokenizer_resume, model_title, model_class
 
-from scripts.db import DataBaseMixin, Query, smi
+from scripts.db import DataBaseMixin, Query, russian
 
 '''
 This module generates new's headlines and annotations using summarization models and write full news items into db
@@ -60,24 +60,25 @@ def make_full_fresh_news_list() -> list:
     Main function of the module | Основная функция модуля
 
     Takes the agency's fresh news, makes a summary and headline for it, forms a dictionary to be recorded
-    into the smi auxiliary database
+    into the auxiliary database russian
 
     Забирает свежие новости агентства, делает к ним резюме и заголовок, формирует словарь свежих новостей для записи
-    во вспомогательную базу данных smi
+    во вспомогательную базу данных russian
     """
 
     if not DataBaseMixin.is_not_empty('news'):
         logger.error(
+            f'News processing cannot start because the news has not yet been collected | '
             f'Обработка новостей не может начаться, так как новости ещё не собраны')
-        logger.info('Соберите новости с помощью модуля parse')
+        logger.info('Collect news using the parse module | Соберите новости с помощью модуля parse')
 
     mono_dict = Query.get_monocategory_dict()
     all_fresh_news_query = "SELECT * FROM news"
-    all_fresh_news_alchemy = DataBaseMixin.get(all_fresh_news_query, smi)
+    all_fresh_news_alchemy = DataBaseMixin.get(all_fresh_news_query, russian)
     fresh_news_list = [dict(fresh_news) for fresh_news in all_fresh_news_alchemy if 'url' in dict(fresh_news).keys()]
 
     start_time = dt.datetime.now()
-    logger.info(f'Начинается обработка новостей от {start_time}:')
+    logger.info(f'News processing begins | Начинается обработка новостей -> {start_time}:')
 
     for i, news in enumerate(fresh_news_list):
         category = model_class.predict(news['news'])[0][0].split('__')[-1]
@@ -95,11 +96,12 @@ def make_full_fresh_news_list() -> list:
     fixed_news = [news for news in fresh_news_list if 'category' in news]
     result_time = dt.datetime.now() - start_time
 
-    logger.info('\nУспешно выполнено с результатами:')
-    logger.info(f'Обработано: {len(fixed_news)} новостей')
-    logger.info(f'Затрачено времени: {round(result_time.seconds / 60, 2)} минут')
-    logger.info(f'Время обработки одной новости: {round(result_time.seconds / (len(fixed_news) + 0.01), 2)} секунд')
-    logger.error(f'{len(fresh_news_list) - len(fixed_news)} отнесены к неновостным сообщениям и не обрабатывались')
+    logger.info('\nSuccessfully executed with the results | Успешно выполнено с результатами:')
+    logger.info(f'Processed | Обработано: {len(fixed_news)} news')
+    logger.info(f'Time taken | Затрачено времени: {round(result_time.seconds / 60, 2)} minutes')
+    logger.info(f'Processing time of one news item | Время обработки новости: {round(result_time.seconds / (len(fixed_news) + 0.01), 2)} sec')
+    logger.error(f'Сategorized as non-news items and not processed | '
+                 f'Отнесены к неновостным сообщениям, не обрабатывались: {len(fresh_news_list) - len(fixed_news)} news')
 
     return fixed_news
 
@@ -128,9 +130,10 @@ def cook_and_move_to_smi():
         try:
             DataBaseMixin.move('news', 'final', fresh_news_list)
         except Exception as e:
-            logger.exception(f'Причина ошибки: {e}')
+            logger.exception(f'Cause of error | Причины ошибки: {e}')
             filename = \
                 str(dt.datetime.now()).split()[0] + '-' + str(dt.datetime.now()).split()[-1].split('.')[-1]
             with open(f'pkl/{filename}.pkl', 'wb') as f:
                 pickle.dump(fresh_news_list, f)
-            logger.error(f'Не удалось записать новости в final, файл {filename} сохранён для ручной обработки\n')
+            logger.error(f'Failed to record news in final, file saved for manual processing | '
+                         f'Не удалось записать новости в final, файл сохранён для ручной обработки: -> {filename}\n')

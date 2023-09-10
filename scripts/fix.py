@@ -27,7 +27,7 @@ def gather_past_resume():
     date_news = DataBaseMixin.get(q, time_machine)
 
     for i, news in enumerate(reversed(date_news)):
-        logger.info(f"{i + 1}/{len(date_news)} {news['url']} - записываю")
+        logger.info({'position': f"{i + 1}/{len(date_news)}", 'url': f"{news['url']}"})
         try:
             # send news to summarization model
             resume = article2resume(news['news'])
