@@ -23,5 +23,5 @@ black_labels = \
             'ДЕЯТЕЛЬНОСТИ ИНОСТРАННОГО АГЕНТА THE BELL.', 'Подписывайтесь на The Bell',),
         'moscowtimes_ru': ('Подписаться на канал | Подписаться на рассылку',),
         'techinsiderru': ('Techinsider (https://t.me/techinsiderru)', 'Techinsider',),
-
+        'Popmeh': ('Популярная механика',),
     }
