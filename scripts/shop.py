@@ -1,7 +1,7 @@
 from imports.imports import logger, random, dt, time, relativedelta, requests, re, BeautifulSoup, parser, EMOJI_DATA
 from imports.phrase_dicts import black_labels
 
-from scripts.db import DataBaseMixin, Query, asmi, russian, foreign
+from scripts.db import DataBaseMixin, Query, asmi, russian, foreign, error
 from scripts.taste import validate_and_write_to_news_db
 
 '''This module is the Parser: it gathers news from news agencies by pre-cleaning them'''
@@ -30,7 +30,7 @@ class AgenciesID(DataBaseMixin):
 
         all_agencies_ids = {}
         news_ids = Query.get_all_ids(self.engine, 'news')
-        error_ids = Query.get_all_ids(russian, 'error_table')
+        error_ids = Query.get_all_ids(error, 'error_table')
 
         if self.engine == russian:
             final_ids = Query.get_all_ids(self.engine, 'final')
@@ -220,7 +220,8 @@ def go_shopping():
             channel.set_news
             if len(channel):
                 len_news = validate_and_write_to_news_db(channel.get_news, engine)
-                logger.info({'news_amount': len_news, 'agency': channel.channel})
+                if len_news:
+                    logger.info({'news_amount': len_news, 'agency': channel.channel})
                 total_news += len_news
                 channel.del_news
                 time.sleep(random.randint(1, 3))
@@ -229,5 +230,5 @@ def go_shopping():
         result_time = dt.datetime.now() - start_time
         logger.info(
             f'\nCollection completed successfully at a rate of | Сбор завершен успешно cо скоростью: '
-            f'{round(result_time.seconds / total_news, 2)} news per second'
+            f'{round(result_time.seconds / (total_news + 0.000001), 2)} news per second'
             f'\nNews received | Получено новостей: {total_news} at {round(result_time.seconds / 60, 2)} minutes.\n')

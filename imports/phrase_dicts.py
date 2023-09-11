@@ -24,4 +24,5 @@ black_labels = \
         'moscowtimes_ru': ('Подписаться на канал | Подписаться на рассылку',),
         'techinsiderru': ('Techinsider (https://t.me/techinsiderru)', 'Techinsider',),
         'Popmeh': ('Популярная механика',),
+        'economika': ('𝔼ℂ𝕆ℕ𝕆𝕄𝕀𝕂𝔸',),
     }

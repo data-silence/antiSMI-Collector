@@ -6,6 +6,7 @@ load_dotenv()
 DB_ASMI = os.getenv("DB_ASMI")
 DB_RUS = os.getenv("DB_RUS")
 DB_FOREIGN = os.getenv("DB_FOREIGN")
+DB_ERROR = os.getenv("DB_ERROR")
 DB_TM = os.getenv("DB_TM")
 
 DB_USER = os.getenv("DB_USER")
@@ -22,6 +23,8 @@ russian = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_RUS}', pool_pre_ping=True)
 foreign = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_FOREIGN}', pool_pre_ping=True)
+error = create_engine(
+    f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_ERROR}', pool_pre_ping=True)
 # archive database, contains news for more than 20 years
 time_machine = create_engine(
     f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_TM}', pool_pre_ping=True)

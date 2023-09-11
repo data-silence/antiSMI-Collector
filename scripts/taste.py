@@ -1,6 +1,6 @@
 from imports.imports import dt, logger, BaseModel, HttpUrl, Field, Enum
 
-from scripts.db import DataBaseMixin, russian, foreign
+from scripts.db import DataBaseMixin, russian, foreign, error
 from scripts.cook import erase_folder
 
 '''
@@ -96,9 +96,12 @@ def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: st
             except ValueError:
                 logger.error(news)
                 error_list.append(news)
-        DataBaseMixin.record(engine, 'news', record_list)
-        DataBaseMixin.record(russian, 'error_table', error_list)
-        len_news = len(record_list)
+        len_news, len_errors = len(record_list), len(error_list)
+        if len_news != 0:
+            DataBaseMixin.record(engine, 'news', record_list)
+        if len_errors != 0:
+            DataBaseMixin.record(error, 'error_table', error_list)
+
     return len_news
 
 
