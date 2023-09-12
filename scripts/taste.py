@@ -137,7 +137,7 @@ def check_and_move_to_asmi():
     if len(final_news):
         try:
             len_news = validate_and_write_to_asmi(final_news)
-            logger.info(f'Успешно записано {len_news} новостей\n')
+            logger.info(f'Successfully recorded news | Успешно записано новостей: {len_news} \n')
             erase_folder('pkl')
         except Exception as e:
-            logger.exception(f'Не смог обработать из-за ошибки {e}\n')
+            logger.exception(f'Could not process due to an error | Не смог обработать из-за ошибки: {e}\n')
