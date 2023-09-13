@@ -48,14 +48,14 @@ if __name__ == '__main__':
         # This module serves for debugging the work of individual modules
         # shopping()
         # cooking()
-        # serving()
+        # # serving()
         # fixing()
 
         scheduler = BlockingScheduler()
         scheduler.configure(timezone='Europe/Moscow')
         scheduler.add_job(fixing, 'cron', hour=0, minute=0, id='fixer',
                           max_instances=10, misfire_grace_time=600)
-        scheduler.add_job(shopping, 'cron', hour='6-21, 23', minute=55, second=10, id='shopper',
+        scheduler.add_job(shopping, 'cron', hour='6-21, 23', minute=56, id='shopper',
                           max_instances=10, misfire_grace_time=600)
         scheduler.add_job(cooking, 'cron', hour='0, 7-21', id='cooker',
                           max_instances=10, misfire_grace_time=600)

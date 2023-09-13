@@ -53,25 +53,20 @@ class AgenciesID(DataBaseMixin):
         return all_agencies_ids
 
     @property
-    def get_ids(self):
-        """Getter to get id's dictionary"""
-        return self.ids_dict if self.ids_dict else logger.error(f'The id dictionary is not yet created | '
-                                                                f'Словарь id пока не создан')
-
-    @property
-    def set_ids(self):
-        """Setter for collecting id's dictionary"""
+    def ids(self):
+        """Getter for collecting id's dictionary"""
         self.ids_dict = self.__get_agencies_ids() if not self.ids_dict else logger.error('The id dictionary already '
                                                                                          'exists | Словарь id уже '
                                                                                          'имеется')
+        return self.ids_dict
 
-    @property
-    def del_ids(self):
+    @ids.deleter
+    def ids(self):
         """Deleter for cleaning id's dictionary"""
         self.ids_dict.clear()
         logger.info('The news id dictionary has been successfully cleaned up | Словарь id новостей успешно очищен')
 
-    def get_agency(self, agency):
+    def __getitem__(self, agency):
         """Allows you to get a dictionary of id's for the desired agency"""
         return self.ids_dict[agency]
 
@@ -152,22 +147,19 @@ class Parser(Query):
         return my_news
 
     @property
-    def get_news(self):
-        return self.news
-
-    @property
-    def set_news(self):
+    def fresh_news(self):
         self.news = self.__grab_news() if not self.news else print('The news has already been collected | '
                                                                    'Новости уже собраны')
+        return self.news
 
-    @property
-    def del_news(self):
+    @fresh_news.deleter
+    def fresh_news(self):
         """
         Cleans up the news dictionary
         Очищает словарь новостей
         """
         self.news.clear()
-        return 'Source processing complete, news removed | Обработка источника завершена, новости удалены'
+        print('Source processing complete, news removed | Обработка источника завершена, новости удалены')
 
     @staticmethod
     def clean_news(news: str, channel: str) -> str:
@@ -213,19 +205,17 @@ def go_shopping():
         start_time = dt.datetime.now()
         logger.info(f'Start parsing {engine} news | Начинается сбор {names} новостей -> {start_time}:')
 
-        agencies_ids = AgenciesID(eng_name=engine)
-        agencies_ids.set_ids
-        for channel, ids_tuple in agencies_ids.get_ids.items():
-            channel = Parser(channel, ids_tuple)
-            channel.set_news
-            if len(channel):
-                len_news = validate_and_write_to_news_db(channel.get_news, engine)
+        agencies_ids = AgenciesID(eng_name=engine).ids
+
+        for agency, ids_tuple in agencies_ids.items():
+            fresh_news = Parser(agency, ids_tuple).fresh_news
+            if len(fresh_news):
+                len_news = validate_and_write_to_news_db(fresh_news, engine)
                 if len_news:
-                    logger.info({'news_amount': len_news, 'agency': channel.channel})
+                    logger.info({'news_amount': len_news, 'agency': agency})
                 total_news += len_news
-                channel.del_news
-                time.sleep(random.randint(1, 3))
-        agencies_ids.del_ids
+                time.sleep(random.random())
+        del agencies_ids
 
         result_time = dt.datetime.now() - start_time
         logger.info(

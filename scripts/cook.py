@@ -99,7 +99,8 @@ def make_full_fresh_news_list() -> list:
     logger.info('\nSuccessfully executed with the results | Успешно выполнено с результатами:')
     logger.info(f'Processed | Обработано: {len(fixed_news)} news')
     logger.info(f'Time taken | Затрачено времени: {round(result_time.seconds / 60, 2)} minutes')
-    logger.info(f'Processing time of one news item | Время обработки новости: {round(result_time.seconds / (len(fixed_news) + 0.01), 2)} sec')
+    logger.info(f'Processing time of one news item | Время обработки новости: '
+                f'{round(result_time.seconds / (len(fixed_news) + 0.01), 2)} sec')
     logger.error(f'Сategorized as non-news items and not processed | '
                  f'Отнесены к неновостным сообщениям, не обрабатывались: {len(fresh_news_list) - len(fixed_news)} news')
 

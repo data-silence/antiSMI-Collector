@@ -76,7 +76,7 @@ class AsmiModel(BaseModel):
     dicts_list: list[AsmiFields]
 
 
-def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: str) -> int:
+def validate_and_write_to_news_db(news_list: list[dict], eng_name: str) -> int:
     """
     Basic function for validating and writing news to temporary databases
     Основная функция для валидации и записи новостей во временные базы данных
@@ -105,7 +105,7 @@ def validate_and_write_to_news_db(news_list: list[ShortNewsFields], eng_name: st
     return len_news
 
 
-def validate_and_write_to_asmi(news_list: list[AsmiFields]):
+def validate_and_write_to_asmi(news_list: list[dict]):
     """
     Basic function for validating and writing news to antiSMI database
     Основная функция для валидации и записи новостей в базу данных antiSMI
