@@ -46,9 +46,10 @@ def fixing():
 if __name__ == '__main__':
     try:
         # This module serves for debugging the work of individual modules
+        # serving()
         # shopping()
         # cooking()
-        # # serving()
+        # serving()
         # fixing()
 
         scheduler = BlockingScheduler()

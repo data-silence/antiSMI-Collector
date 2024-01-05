@@ -218,6 +218,6 @@ class Query(DataBaseMixin):
         Builds a dictionary of all existing article id's
         Формирует словарь всех существующих id статей
         """
-        query = f"SELECT agency, split_part(url, '/', 5)::int AS id FROM {base_to}"
+        query = f"SELECT agency, split_part(url, '/', 5)::int AS id FROM {base_to} WHERE agency != 'newsru.co.il'"
         query_result = DataBaseMixin.get(query, engine)
         return query_result
