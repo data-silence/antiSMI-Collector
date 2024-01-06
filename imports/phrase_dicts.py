@@ -25,4 +25,5 @@ black_labels = \
         'techinsiderru': ('Techinsider (https://t.me/techinsiderru)', 'Techinsider',),
         'Popmeh': ('Популярная механика',),
         'economika': ('𝔼ℂ𝕆ℕ𝕆𝕄𝕀𝕂𝔸',),
+        'BIoomberg': ('2024[BBG]',),
     }
