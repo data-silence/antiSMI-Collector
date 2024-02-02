@@ -1,6 +1,8 @@
 # antiSMI-Collector
 ![Parser stats](https://github.com/maxlethal/antiSMI-Collector/blob/master/img/Parser%20stats.png?raw=true)
 
+![Apache Superset](https://img.shields.io/badge/Superset-black?style=flat-square&logo=Superset) ![Pydantic](https://img.shields.io/badge/Pydantic-black?style=flat-square&logo=Pydantic) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-black?style=flat-square&logo=PostgreSQL) ![SQLalchemy](https://img.shields.io/badge/SQLalchemy-black?style=flat-square&logo=sqlalchemy) ![Docker](https://img.shields.io/badge/Docker-black?style=flat-square&logo=Docker) ![BS4](https://img.shields.io/badge/BeautifulSoup4-black?style=flat-square&logo=BS4) ![Requests](https://img.shields.io/badge/Requests-black?style=flat-square&logo=Requests) 
+
 ## Table of contents
 
 * [About](#about)
